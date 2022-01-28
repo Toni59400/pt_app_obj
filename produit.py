@@ -1,3 +1,5 @@
+from dbconnection import * 
+
 class Produit:
     def __init__(self, id, caracteristique, prix, nom):
         self.__id = id
@@ -31,4 +33,7 @@ class Produit:
     def afficher(self):
         return "Le produit {0} est {1} au prix de {2}€".format(self.__nom,self.__caracteristique,self.__prix)
 
-    
+    #maj
+    def maj_data(self) :
+        cursor.execute("UPDATE PRODUIT set nom = ? , caracteristique = ? , prix = ? WHERE id_produit = ?", self.__nom, self.__caracteristique, self.__prix, self.__id)
+        connection.commit()
