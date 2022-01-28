@@ -1,3 +1,5 @@
+from dbconnection import *
+
 class Users:
     def __init__(self,idUser,identifiant,passwd):
         self.idUser = idUser
