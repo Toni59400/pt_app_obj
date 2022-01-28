@@ -39,7 +39,7 @@ class Client() :
     Mise à jour des données dans la bd
     '''
     def maj_data(self) :
-        cursor.execute("UPDATE PROSPECT set nom = ? , prenom = ? , numSiret = ?, adressePostale = ?, codePostale = ?, ville = ? WHERE id_prospect = ?", self.__nom, self.__prenom, self.__numSiret, self.__adresse, self.__codePostal, self.__ville, self.__id)
+        cursor.execute("UPDATE PROSPECT set nom = ? , prenom = ? , numSiret = ?, adressePostale = ?, codePostal = ?, ville = ? WHERE id_prospect = ?", (self.__nom, self.__prenom, self.__numSiret, self.__adresse, self.__codePostal, self.__ville, self.__id))
         connection.commit()
 
     """
@@ -72,7 +72,7 @@ class Client() :
     def affiche_client(self) : 
         if self.__numSiret == "" : 
             # client physique
-            return "Client Physique, {} {} habite au {} à {} {}".format(self.__prenom, self.__nom, self.__adresse, self.__codePostal, self.__ville)
+            print( "Client Physique, {} {} habite au {} à {} {}".format(self.__prenom, self.__nom, self.__adresse, self.__codePostal, self.__ville))
         else : 
-            return "Client Moral, {} recensé au {} à {} {}".format(self.__nom, self.__adresse, self.__codePostal, self.__ville)
+            print( "Client Moral, {} recensé au {} à {} {}".format(self.__nom, self.__adresse, self.__codePostal, self.__ville))
 

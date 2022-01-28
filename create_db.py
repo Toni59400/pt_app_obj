@@ -19,6 +19,18 @@ except :
 
 data = cursor.execute("SELECT * FROM PROSPECT")
 for row in data : 
-    print(row)
+    id = row['id_prospect']
+    nom = row['nom']
+    prenom = row['prenom']
+    siret = row['numSiret']
+    adresse = row["adressePostale"]
+    cp = row["codePostal"]
+    ville = row['ville']
 
-#toni = Client()
+    toni = Client(id, nom, prenom, siret, adresse, cp, ville)
+
+    toni.affiche_client()
+    toni.set_adresse('61 rue du Temple')
+    toni.affiche_client()
+
+  
