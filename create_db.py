@@ -1,4 +1,5 @@
 from dbconnection import * 
+from client import * 
 
 
 try : 
@@ -10,7 +11,14 @@ except :
     print("DB deja crée, table egalement.")
 
 try : 
-    cursor.execute("INSERT INTO UTILISATEUR(identifiant, mdp) VALUES ('toni59400', '123456')")
+    #cursor.execute("INSERT INTO UTILISATEUR(identifiant, mdp) VALUES ('toni59400', '123456')")
+    #cursor.execute("INSERT INTO PROSPECT(nom, prenom, numSiret, adressePostale, codePostal, ville) VALUES ('PIRA', 'Toni', '','60 rue du Temple', '62000', 'Arras')")
     connection.commit()
 except : 
     print("User non ajouté")
+
+data = cursor.execute("SELECT * FROM PROSPECT")
+for row in data : 
+    print(row)
+
+#toni = Client()
