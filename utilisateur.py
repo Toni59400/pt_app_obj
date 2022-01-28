@@ -1,27 +1,27 @@
 from dbconnection import *
 
-class Users:
-    def __init__(self,idUser,identifiant,passwd):
-        self.idUser = idUser
+class Utilisateur:
+    def __init__(self,id,identifiant,mdp):
+        self.__id = id
         self.__identifiant = identifiant
-        self.__passwd = passwd
+        self.__mdp = mdp
 
-    def get_iduser(self):
-        return self.__iduser
+
+    #get
+    def get_id(self) :
+        return self.__id
 
     def get_identifiant(self):
         return self.__identifiant
     
     def get_passwd(self):
-        return self.__passwd
+        return self.__mdp
 
 
-    def set_identifiant(self,id):
-        self.__identifiant = id
+    #set
+    def set_identifiant(self,new):
+        self.__identifiant = new
 
-    def set_mdp(self,mdp):
-        self.__passwd = mdp
+    def set_mdp(self,new):
+        self.__mdp = new
 
-
-
-    
