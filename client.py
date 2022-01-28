@@ -1,4 +1,4 @@
-from dbconnection import * 
+from dbconnection import *
 
 class Client() : 
     def __init__(self, id, nom, prenom, numSiret, adressePostale, codePostal, ville) : 
