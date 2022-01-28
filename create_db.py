@@ -17,6 +17,28 @@ try :
 except : 
     print("User non ajouté")
 
+"""
+#insertion des donnes dans la bdd
+prenom = ["","","","valentin","kelian","julien","antoine","floria"]
+nom = ["pira","danco","neuville","quide","lenglet","toussaint","marechal","meresse"]
+siret = ["98889998", "899988888", "8999999987453", "","","","",""]
+adresse = ["1 rue john doe","2 rue john doe","3 rue john doe","4 rue john doe","5 rue john doe","6 rue john doe","7 rue john doe","8 rue john doe"]
+cp = ["62000","62000","59400","59161","59400","59000","62000","59161"]
+ville = ["Arras","Arras","Cambrai","Escaudoeuvres","Cambrai","Lille","Arras","Cagnoncles"]
+
+for i in range(8) : 
+    cursor.execute("INSERT INTO PROSPECT(nom, prenom, numSiret, adressePostale, codePostal, ville) VALUES (?, ?, ?,?, ?, ?)", (prenom[i], nom[i], siret[i], adresse[i], cp[i], ville[i]))
+    connection.commit()
+    print("ok {}".format(i))
+"""
+
+
+
+
+'''
+lst_propect = []
+# RECUPERER LES DATA DE LA BDD ET LES TRANSFORMER EN OBJ ET METTRE CES OBJ DANS UNE LISTE D'OBJ
+
 data = cursor.execute("SELECT * FROM PROSPECT")
 for row in data : 
     id = row['id_prospect']
@@ -27,10 +49,8 @@ for row in data :
     cp = row["codePostal"]
     ville = row['ville']
 
-    toni = Client(id, nom, prenom, siret, adresse, cp, ville)
+    tmp = Client(id, nom, prenom, siret, adresse, cp, ville)
+    lst_propect.append(tmp)
+'''
 
-    toni.affiche_client()
-    toni.set_adresse('61 rue du Temple')
-    toni.affiche_client()
 
-  

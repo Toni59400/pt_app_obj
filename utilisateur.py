@@ -24,4 +24,3 @@ class Utilisateur:
 
     def set_mdp(self,new):
         self.__mdp = new
-
