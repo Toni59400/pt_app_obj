@@ -11,12 +11,15 @@ class Produit:
     #set
     def set_caracteristique(self,new):
         self.__caracteristique = new
-
+        self.maj_data()
+        
     def set_nom(self,new):
         self.__nom = new
+        self.maj_data()
 
     def set_prix(self,new):
         self.__prix = new
+        self.maj_data()
 
 
     #get
