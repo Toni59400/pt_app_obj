@@ -75,3 +75,4 @@ class Client() :
             return "Client Physique, {} {} habite au {} à {} {}".format(self.__prenom, self.__nom, self.__adresse, self.__codePostal, self.__ville)
         else : 
             return "Client Moral, {} recensé au {} à {} {}".format(self.__nom, self.__adresse, self.__codePostal, self.__ville)
+
