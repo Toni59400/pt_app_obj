@@ -17,10 +17,16 @@ class Utilisateur:
     def get_passwd(self):
         return self.__mdp
 
+    #maj
+    def maj_data(self) :
+        cursor.execute("UPDATE UTILISATEUR set identifiant = ? , mdp = ? WHERE id_utilisateur = ?", (self.__identifiant, self.__mdp, self.__id))
+        connection.commit()
 
     #set
     def set_identifiant(self,new):
         self.__identifiant = new
+        self.maj_data()
 
     def set_mdp(self,new):
         self.__mdp = new
+        self.maj_data()
