@@ -51,6 +51,11 @@ for row in data :
 
     tmp = Client(id, nom, prenom, siret, adresse, cp, ville)
     lst_propect.append(tmp)
+
 '''
+
+data= cursor.execute("SELECT * FROM RDV")
+for row in data : 
+    print("g")
 
 

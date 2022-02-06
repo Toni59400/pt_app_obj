@@ -1,3 +1,4 @@
+from lib2to3.pytree import LeafPattern
 from select import select
 from tkinter import *
 from utilisateur import *
@@ -6,6 +7,7 @@ from cProfile import label
 from cgitb import text
 from dbconnection import * 
 from client import *
+from rdv import *
 
 def seConnecter():
     cpt = 0
@@ -64,11 +66,23 @@ for row in data :
         lst_propect_mor.append(tmp)
     else : 
         lst_propect_phy.append(tmp)
+
+lst_rdv = [] 
+data_rdv = cursor.execute("SELECT * FROM RDV")
+for row2 in data_rdv : 
+    id_rdv = row2['id_rdv']
+    date = row2['dateHeure']
+    com_avant = row2['commentaireAvant']
+    com_apres = row2['commentaireApres']
+    prosp = int(row2['id_prospect'])
+    tmp2 = Rdv(id_rdv, date, com_avant, com_apres, prosp)
+    lst_rdv.append(tmp2)
     
 
 # -------------------------------------------__  CONNEXION AUTHENTIFIER, AFFICHAGE DES CLIENTS (prospect)  __------------------------------------------------- 
 
-
+phy = False
+mor = False
  
 def valider() : 
     e1.grid_forget()
@@ -78,12 +92,7 @@ def valider() :
     submit.grid_forget()
     exit.grid_forget()
     root.title("Prospects")
-    root.geometry("800x700")
     root.resizable(False, False)
-    menu_ = Menu(root, tearoff=0)
-    menu_.add_command(label="Ajouter Prospect", command=create_new_prospect)
-    menu_.add_command(label="Rendez-vous")
-    root.config(menu=menu_)
     l_id = Label(root, text="",  width=13, height=1, borderwidth=3)
     l_nom = Label(root, text="Nom",  width=13, height=1, borderwidth=3, relief="groove",  bg="#747e8b")
     l_prenom = Label(root, text="Prenom",  width=13, height=1, borderwidth=3, relief="groove", bg="#747e8b")
@@ -134,7 +143,7 @@ def valider() :
         tmp_adresse.grid(column= 3,row=count+1)
         tmp_cp.grid(column= 4,row=count+1)
         tmp_ville.grid(column= 5,row=count+1)
-        
+        tmp_id.grid(column=6, row=count+4)
     
     l_moral.grid(column=0, row=count+3, columnspan=6)
     l_id.grid(column=0, row=count+4)
@@ -143,6 +152,7 @@ def valider() :
     l_adresse.grid(column=3, row=count+4)
     l_cp.grid(column=4, row=count+4)
     l_ville.grid(column=5, row=count+4)
+    
 
 
     
@@ -169,121 +179,167 @@ def valider() :
         tmp_adresse.grid(column= 3,row=count+4)
         tmp_cp.grid(column= 4,row=count+4)
         tmp_ville.grid(column= 5,row=count+4)
+        tmp_id.grid(column=6, row=count+4)
 
 
-new = Toplevel(root)
-def add_phy() : 
-    nom = e_nom.get()
-    prenom = e_prenom.get()
-    adresse = e_adresse.get()
-    cp = e_cp.get()
-    ville = e_ville.get()
-    try : 
-        t = (nom, prenom, adresse, cp, ville)
-        cursor.execute("INSERT INTO PROSPECT (nom, prenom, numSiret, adressePostale, codePostal, ville) values ( ? , ? , '' , ? , ? , ?)", t)
-        connection.commit()
-        messagebox.showinfo("Ajout", "Le prospect physique vient d'être ajouté.")
-    except : 
-        messagebox.showinfo("Erreur dans l'ajout", "Le prospect n'a pas pu être ajouté à la base de donnée.")
-    
+    def add_phy() : 
+        nom = e_nom.get()
+        prenom = e_prenom.get()
+        adresse = e_adresse.get()
+        cp = e_cp.get()
+        ville = e_ville.get()
+        try : 
+            t = (nom, prenom, adresse, cp, ville)
+            cursor.execute("INSERT INTO PROSPECT (nom, prenom, numSiret, adressePostale, codePostal, ville) values ( ? , ? , '' , ? , ? , ?)", t)
+            connection.commit()
+            messagebox.showinfo("Ajout", "Le prospect physique vient d'être ajouté.")
+        except : 
+            messagebox.showinfo("Erreur dans l'ajout", "Le prospect n'a pas pu être ajouté à la base de donnée.")
+        
 
-def add_mor() : 
-    nom = e_nom.get()
-    adresse = e_adresse.get()
-    cp = e_cp.get()
-    ville = e_ville.get()
-    siret = e_siret.get()
-    try : 
-        t = (nom, siret, adresse, cp, ville)
-        cursor.execute("INSERT INTO PROSPECT (nom, prenom, numSiret, adressePostale, codePostal, ville) values ( ? , '' , ? , ? , ? , ?)", t)
-        connection.commit()
-        messagebox.showinfo("Ajout", "Le prospect moral vient d'être ajouté.")
-    except : 
-        messagebox.showinfo("Erreur dans l'ajout", "Le prospect n'a pas pu être ajouté à la base de donnée.")
-
-
-
-l_phy = Label(new, text="Ajout d'un prospect Physique")
-l_mor = Label(new, text="Ajout d'un prospect Moral")
-l_quest = Label(new, text="Prospect Physique ? ")
-l_nom = Label(new, text="Nom : ")
-e_nom = Entry(new)
-l_prenom = Label(new, text="Prenom : ")
-e_prenom = Entry(new)
-l_siret = Label(new, text="Siret : ")
-e_siret = Entry(new)
-l_adresse = Label(new, text="Adresse : ")
-e_adresse = Entry(new)
-l_ville = Label(new, text="Ville : ")
-e_ville = Entry(new)
-l_cp = Label(new, text="Code Postal : ")
-e_cp = Entry(new)
-btn_add_phy = Button(new, text='Ajouter', command=add_phy)
-btn_add_mor = Button(new, text="Ajouter", command=add_mor)
-
-l_espace = Label(new)
-l_espace.grid(row=1, rowspan=2)
-
-phy = False
-mor = False
+    def add_mor() : 
+        nom = e_nom.get()
+        adresse = e_adresse.get()
+        cp = e_cp.get()
+        ville = e_ville.get()
+        siret = e_siret.get()
+        try : 
+            t = (nom, siret, adresse, cp, ville)
+            cursor.execute("INSERT INTO PROSPECT (nom, prenom, numSiret, adressePostale, codePostal, ville) values ( ? , '' , ? , ? , ? , ?)", t)
+            connection.commit()
+            messagebox.showinfo("Ajout", "Le prospect moral vient d'être ajouté.")
+        except : 
+            messagebox.showinfo("Erreur dans l'ajout", "Le prospect n'a pas pu être ajouté à la base de donnée.")
 
 
 
-def prospect_phy():
-    global mor, phy
-    phy = True
-    if mor==True:
-        mor = False
-        l_siret.grid_forget()
-        e_siret.grid_forget()
-        l_mor.grid_forget()
-        btn_add_mor.grid_forget()
-    l_phy.grid(row=3)
-    l_nom.grid(row=3+1, column=0)
-    e_nom.grid(row=3+1, column=1)
-    l_prenom.grid(row=4+1, column=0)
-    e_prenom.grid(row=4+1, column=1)
-    l_adresse.grid(row=5+1, column=0)
-    e_adresse.grid(row=5+1, column=1)
-    l_ville.grid(row=6+1, column=0)
-    e_ville.grid(row=6+1, column=1)
-    l_cp.grid(row=7+1, column=0)
-    e_cp.grid(row=7+1, column=1)
-    btn_add_phy.grid(row=9, columnspan=2)
+    l_phy = Label(root, text="Ajout d'un prospect Physique", width=25, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+    l_mor = Label(root, text="Ajout d'un prospect Moral", width=25, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+    l_quest = Label(root, text="Ajouter un prospect Physique ? ", width=26, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+    l_nom = Label(root, text="Nom : ", width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+    e_nom = Entry(root)
+    l_prenom = Label(root, text="Prenom : ", width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+    e_prenom = Entry(root)
+    l_siret = Label(root, text="Siret : ", width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+    e_siret = Entry(root)
+    l_adresse = Label(root, text="Adresse : ", width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+    e_adresse = Entry(root)
+    l_ville = Label(root, text="Ville : ", width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+    e_ville = Entry(root)
+    l_cp = Label(root, text="Code Postal : ", width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+    e_cp = Entry(root)
+    btn_add_phy = Button(root, text='Ajouter', command=add_phy)
+    btn_add_mor = Button(root, text="Ajouter", command=add_mor)
+
+    l_espace = Label(root)
+    l_espace.grid(row=1, rowspan=2)
 
 
-def prospect_mor():
-    global mor, phy
-    mor = True
-    if phy==True:
-        phy = False
-        l_nom.grid_forget()
-        e_nom.grid_forget()
-        l_phy.grid_forget()
-        btn_add_phy.grid_forget()
-    l_mor.grid(row=3)
-    l_nom.grid(row=3+1, column=0)
-    e_nom.grid(row=3+1, column=1)
-    l_siret.grid(row=4+1, column=0)
-    e_siret.grid(row=4+1, column=1)
-    l_adresse.grid(row=5+1, column=0)
-    e_adresse.grid(row=5+1, column=1) 
-    l_ville.grid(row=6+1, column=0)
-    e_ville.grid(row=6+1, column=1)
-    l_cp.grid(row=7+1, column=0)
-    e_cp.grid(row=7+1, column=1)
-    btn_add_mor.grid(row=9, columnspan=2)
 
 
-btn_oui = Radiobutton(new, text="Oui", command=prospect_phy)
-btn_non = Radiobutton(new, text="Non", command=prospect_mor)
 
-def create_new_prospect() : 
-    new.geometry("800x700")
-    new.title("Nouveau Prospect")
-    l_quest.grid(row=0, column=0)
-    btn_non.grid(row=0, column=1)
-    btn_oui.grid(row=0, column=2)
+    def prospect_phy():
+        global mor, phy
+        phy = True
+        if mor==True:
+            mor = False
+            l_siret.grid_forget()
+            e_siret.grid_forget()
+            l_mor.grid_forget()
+            btn_add_mor.grid_forget()
+        l_phy.grid(row=3, column=7)
+        l_nom.grid(row=3+1, column=7)
+        e_nom.grid(row=3+1, column=8)
+        l_prenom.grid(row=4+1, column=7)
+        e_prenom.grid(row=4+1, column=8)
+        l_adresse.grid(row=5+1, column=7)
+        e_adresse.grid(row=5+1, column=8)
+        l_ville.grid(row=6+1, column=7)
+        e_ville.grid(row=6+1, column=8)
+        l_cp.grid(row=7+1, column=7)
+        e_cp.grid(row=7+1, column=8)
+        btn_add_phy.grid(row=9, columnspan=2, column=7)
+        for i in range (7) : 
+            tmp_id.grid(column=9, row=i+3)
+
+    def prospect_mor():
+        global mor, phy
+        mor = True
+        if phy==True:
+            phy = False
+            l_nom.grid_forget()
+            e_nom.grid_forget()
+            l_prenom.grid_forget()
+            e_prenom.grid_forget()
+            l_phy.grid_forget()
+            btn_add_phy.grid_forget()
+        l_mor.grid(row=3, column=7)
+        l_nom.grid(row=3+1, column=7)
+        e_nom.grid(row=3+1, column=8)
+        l_siret.grid(row=4+1, column=7)
+        e_siret.grid(row=4+1, column=8)
+        l_adresse.grid(row=5+1, column=7)
+        e_adresse.grid(row=5+1, column=8)
+        l_ville.grid(row=6+1, column=7)
+        e_ville.grid(row=6+1, column=8)
+        l_cp.grid(row=7+1, column=7)
+        e_cp.grid(row=7+1, column=8)
+        btn_add_mor.grid(row=9, columnspan=2, column=7)
+        for i in range (7) : 
+            tmp_id.grid(column=9, row=i+3, columnspan=2)
+
+
+    btn_oui = Radiobutton(root, text="Oui", command=prospect_phy)
+    btn_non = Radiobutton(root, text="Non", command=prospect_mor)
+
+    l_quest.grid(row=0, column=7)
+    btn_non.grid(row=0, column=8)
+    btn_oui.grid(row=0, column=9)
+    tmp_id.grid(row=0, column=10)
+
+
+    # pour les rendez vous : 
+    btn_add_rdv = Button(root, text="Ajouter un rendez-vous", width=25, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+    l_rdv = Label(root, text="Liste des rendez-vous : " , width=25, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+
+    tmp_id.grid(row=10, column=7)
+    btn_add_rdv.grid(row=11, column=7)
+    l_rdv.grid(row=12, column=7)
+
+    f_rdv = Frame(root)
+
+    l_date = Label(f_rdv, text="Date",  width=13, height=1, borderwidth=3, relief="groove", bg="#747e8b")
+    l_com_avant = Label(f_rdv, text="Commentaire",  width=13, height=1, borderwidth=3, relief="groove", bg="#747e8b")
+    l_com_apres = Label(f_rdv, text="Com Apres RDV",  width=13, height=1, borderwidth=3, relief="groove", bg="#747e8b")
+    l_prosp = Label(f_rdv, text="Prospect",  width=13, height=1, borderwidth=3, relief="groove", bg="#747e8b")
+
+    f_rdv.grid(row=13, column=7)
+    l_date.grid(row=0, column=0)
+    l_com_avant.grid(row=0, column=1)
+    l_com_apres.grid(row=0, column=2)
+    l_prosp.grid(row=0, column=3)
+
+    count2 = 0
+    for rdv in lst_rdv : 
+        count2+=1
+        if count2 % 2 == 0 : 
+            tmp_date = Label(f_rdv, text= rdv.get_date(), width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+            tmp_com = Label(f_rdv, text= rdv.get_com_avant(),   width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+            tmp_com_apres = Label(f_rdv, text= rdv.get_com_apres(),  width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+            tmp_prosp = Label(f_rdv, text= rdv.get_prosp(), width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+        else : 
+            tmp_date = Label(f_rdv, text= rdv.get_date(), width=13, height=1, borderwidth=3, relief="groove")
+            tmp_com = Label(f_rdv, text= rdv.get_com_avant(),   width=13, height=1, borderwidth=3, relief="groove")
+            tmp_com_apres = Label(f_rdv, text= rdv.get_com_apres(),  width=13, height=1, borderwidth=3, relief="groove")
+            tmp_prosp = Label(f_rdv, text= rdv.get_prosp(), width=13, height=1, borderwidth=3, relief="groove")
+
+        tmp_date.grid(row=count2 , column=0)
+        tmp_com.grid(row=count2 , column=1)
+        tmp_com_apres.grid(row=count2 , column=2)
+        tmp_prosp.grid(row=count2 , column=3)
+
+
+
 
 
 
