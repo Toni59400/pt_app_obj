@@ -9,6 +9,7 @@ from dbconnection import *
 from client import *
 from rdv import *
 
+
 def seConnecter():
     cpt = 0
     user = cursor.execute("SELECT * FROM Utilisateur WHERE identifiant= ?", (e1.get(),))
@@ -52,6 +53,7 @@ exit.grid(row=2, column=1, padx=20, pady=20)
 # RECUPERER LES DATA DE LA BDD ET LES TRANSFORMER EN OBJ ET METTRE CES OBJ DANS UNE LISTE D'OBJ
 lst_propect_phy = []
 lst_propect_mor = []
+
 data = cursor.execute("SELECT * FROM PROSPECT")
 for row in data : 
     id = row['id_prospect']
@@ -78,7 +80,7 @@ for row2 in data_rdv :
     tmp2 = Rdv(id_rdv, date, com_avant, com_apres, prosp)
     lst_rdv.append(tmp2)
     
-
+lst_all_prospect = lst_propect_mor + lst_propect_phy
 # -------------------------------------------__  CONNEXION AUTHENTIFIER, AFFICHAGE DES CLIENTS (prospect)  __------------------------------------------------- 
 
 phy = False
@@ -188,14 +190,19 @@ def valider() :
         adresse = e_adresse.get()
         cp = e_cp.get()
         ville = e_ville.get()
-        try : 
-            t = (nom, prenom, adresse, cp, ville)
-            cursor.execute("INSERT INTO PROSPECT (nom, prenom, numSiret, adressePostale, codePostal, ville) values ( ? , ? , '' , ? , ? , ?)", t)
-            connection.commit()
-            messagebox.showinfo("Ajout", "Le prospect physique vient d'être ajouté.")
-        except : 
-            messagebox.showinfo("Erreur dans l'ajout", "Le prospect n'a pas pu être ajouté à la base de donnée.")
-        
+        if nom == "" or prenom == "" or adresse == "" or cp == "" or ville == "" : 
+            messagebox.showinfo("Erreur dans l'ajout", "Le prospect n'a pas pu être ajouté à la base de donnée. Tous les champs ne sont pas remplis.")
+        else : 
+            reponse = messagebox.askokcancel("Ajout d'un prospect", "Voulez vous vraiment ajouter le prospect ?")
+            if reponse : 
+                try : 
+                    t = (nom, prenom, adresse, cp, ville)
+                    cursor.execute("INSERT INTO PROSPECT (nom, prenom, numSiret, adressePostale, codePostal, ville) values ( ? , ? , '' , ? , ? , ?)", t)
+                    connection.commit()
+                    messagebox.showinfo("Ajout", "Le prospect physique vient d'être ajouté.")
+                except : 
+                    messagebox.showinfo("Erreur dans l'ajout", "Le prospect n'a pas pu être ajouté à la base de donnée.")
+                
 
     def add_mor() : 
         nom = e_nom.get()
@@ -203,13 +210,18 @@ def valider() :
         cp = e_cp.get()
         ville = e_ville.get()
         siret = e_siret.get()
-        try : 
-            t = (nom, siret, adresse, cp, ville)
-            cursor.execute("INSERT INTO PROSPECT (nom, prenom, numSiret, adressePostale, codePostal, ville) values ( ? , '' , ? , ? , ? , ?)", t)
-            connection.commit()
-            messagebox.showinfo("Ajout", "Le prospect moral vient d'être ajouté.")
-        except : 
-            messagebox.showinfo("Erreur dans l'ajout", "Le prospect n'a pas pu être ajouté à la base de donnée.")
+        if nom == "" or adresse == "" or cp == "" or ville == "" or siret == "" : 
+            messagebox.showinfo("Erreur dans l'ajout", "Le prospect n'a pas pu être ajouté à la base de donnée. Tous les champs ne sont pas remplis.")
+        else : 
+            reponse = messagebox.askokcancel("Ajout d'un prospect", "Voulez vous vraiment ajouter le prospect ?")
+            if reponse : 
+                try : 
+                    t = (nom, siret, adresse, cp, ville)
+                    cursor.execute("INSERT INTO PROSPECT (nom, prenom, numSiret, adressePostale, codePostal, ville) values ( ? , '' , ? , ? , ? , ?)", t)
+                    connection.commit()
+                    messagebox.showinfo("Ajout", "Le prospect moral vient d'être ajouté.")
+                except : 
+                    messagebox.showinfo("Erreur dans l'ajout", "Le prospect n'a pas pu être ajouté à la base de donnée.")
 
 
 
@@ -289,6 +301,64 @@ def valider() :
             tmp_id.grid(column=9, row=i+3, columnspan=2)
 
 
+    liste_client = Listbox(root)
+    c_cli = 0
+    for cli in lst_all_prospect : 
+        c_cli += 1
+        who = (cli.get_nom() + " " + cli.get_prenom() + "#" + str(cli.get_id())).title()
+        liste_client.insert(c_cli, who)
+
+    
+    l_commentaire_avant = Label(root,  text="Commantaire : ", width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+    l_date_rdv = Label(root,  text="Date : ", width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+    e_commentaire_avant = Entry(root, width=20)
+    e_date_add = Entry(root)
+    frame_btn_rdv = Frame(root)
+    l_ajout_rdv = Label(root, text="Ajout d'un rendez-vous : ")
+    
+
+
+    def rm_add_rdv() : 
+        liste_client.grid_forget()
+        l_commentaire_avant.grid_forget()
+        l_date_rdv.grid_forget()
+        e_commentaire_avant.grid_forget()
+        e_date_add.grid_forget()
+        btn_annul_add_rdv.grid_forget()
+        btn_add_rdv_confirm.grid_forget()
+        l_ajout_rdv.grid_forget()
+
+    def add_rdv_to_bdd() : 
+        if e_commentaire_avant.get() == "" or e_date_add.get() == "" : 
+            messagebox.showinfo("Erreur dans l'ajout", "Il manque des informations pour ajouter le rendez-vous.")
+        else : 
+            reponse = messagebox.askokcancel("Ajout du rendez-vous", "Voulez vous vraiment ajouter le rendez-vous ?")
+            
+            if reponse : 
+                id_prospect_add_rdv = "".join(liste_client.get(ANCHOR)).split("#")[-1]
+                t_add_rdv = (e_date_add.get(), e_commentaire_avant.get(), id_prospect_add_rdv)
+                cursor.execute("INSERT INTO RDV (dateHeure, commentaireAvant, commentaireApres, id_prospect) values ( ? , ? , '' , ?)", t_add_rdv)
+                connection.commit()
+                messagebox.showinfo("Ajouter avec succès", "Le rendez-vous a été ajouter avec succès.")
+
+
+    btn_annul_add_rdv = Button(frame_btn_rdv, text="Annuler", command=rm_add_rdv)
+    btn_add_rdv_confirm = Button(frame_btn_rdv, text="Ajouter", command=add_rdv_to_bdd)
+    ### pour ajouter un rdv
+    def add_rdv() : 
+        liste_client.grid(row=0+1, column=13)
+        l_commentaire_avant.grid(row=1+1, column=12)
+        l_date_rdv.grid(row=2+1, column=12)
+        e_commentaire_avant.grid(row=1+1, column=13)
+        e_date_add.grid(row=2+1, column=13)
+        btn_annul_add_rdv.grid(row=0, column=0)
+        btn_add_rdv_confirm.grid(row=0, column=1)
+        frame_btn_rdv.grid(row=3+1, column=12, columnspan=2)
+        l_ajout_rdv.grid(row=0, column=12, columnspan=2)
+        
+
+
+
     btn_oui = Radiobutton(root, text="Oui", command=prospect_phy)
     btn_non = Radiobutton(root, text="Non", command=prospect_mor)
 
@@ -299,7 +369,7 @@ def valider() :
 
 
     # pour les rendez vous : 
-    btn_add_rdv = Button(root, text="Ajouter un rendez-vous", width=25, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+    btn_add_rdv = Button(root, text="Ajouter un rendez-vous", width=25, height=1, borderwidth=3, relief="groove", bg="#747e8b", command=add_rdv)
     l_rdv = Label(root, text="Liste des rendez-vous : " , width=25, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
 
     tmp_id.grid(row=10, column=7)
@@ -320,6 +390,7 @@ def valider() :
     l_prosp.grid(row=0, column=3)
 
     count2 = 0
+    print(lst_rdv)
     for rdv in lst_rdv : 
         count2+=1
         if count2 % 2 == 0 : 
@@ -337,13 +408,6 @@ def valider() :
         tmp_com.grid(row=count2 , column=1)
         tmp_com_apres.grid(row=count2 , column=2)
         tmp_prosp.grid(row=count2 , column=3)
-
-
-
-
-
-
-
 
 root.mainloop()
 connection.close()

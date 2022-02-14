@@ -54,8 +54,5 @@ for row in data :
 
 '''
 
-data= cursor.execute("SELECT * FROM RDV")
-for row in data : 
-    print("g")
 
 
