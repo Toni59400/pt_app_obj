@@ -23,6 +23,9 @@ class Produit:
 
 
     #get
+    def get_id(self) : 
+        return self.__id 
+
     def get_caracteristique(self):
         return self.__caracteristique
     

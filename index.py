@@ -8,6 +8,7 @@ from cgitb import text
 from dbconnection import * 
 from client import *
 from rdv import *
+from produit import * 
 
 
 def seConnecter():
@@ -53,6 +54,16 @@ exit.grid(row=2, column=1, padx=20, pady=20)
 # RECUPERER LES DATA DE LA BDD ET LES TRANSFORMER EN OBJ ET METTRE CES OBJ DANS UNE LISTE D'OBJ
 lst_propect_phy = []
 lst_propect_mor = []
+lst_produit = []
+
+data_produit = cursor.execute("SELECT * FROM PRODUIT")
+for row in data_produit : 
+    id = row["id_produit"]
+    nom = row["nom"]
+    prix = row["prix"]
+    caracteristique = row["caracteristique"]
+    tmp_prod = Produit(id, caracteristique, prix, nom)
+    lst_produit.append(tmp_prod)
 
 data = cursor.execute("SELECT * FROM PROSPECT")
 for row in data : 
@@ -77,7 +88,8 @@ for row2 in data_rdv :
     com_avant = row2['commentaireAvant']
     com_apres = row2['commentaireApres']
     prosp = int(row2['id_prospect'])
-    tmp2 = Rdv(id_rdv, date, com_avant, com_apres, prosp)
+    produit = int(row2['id_prod'])
+    tmp2 = Rdv(id_rdv, date, com_avant, com_apres, prosp, produit)
     lst_rdv.append(tmp2)
     
 lst_all_prospect = lst_propect_mor + lst_propect_phy
@@ -301,12 +313,21 @@ def valider() :
             tmp_id.grid(column=9, row=i+3, columnspan=2)
 
 
-    liste_client = Listbox(root)
+    liste_client = Listbox(root, exportselection=0)
     c_cli = 0
     for cli in lst_all_prospect : 
         c_cli += 1
         who = (cli.get_nom() + " " + cli.get_prenom() + "#" + str(cli.get_id())).title()
         liste_client.insert(c_cli, who)
+
+
+    liste_produit = Listbox(root, exportselection=0)
+    c_prod = 0
+    for prod in lst_produit : 
+        c_prod += 1 
+        produit = (prod.get_nom() + " #" + str(prod.get_id())).title()
+        liste_produit.insert(c_prod, produit)
+
 
     
     l_commentaire_avant = Label(root,  text="Commantaire : ", width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
@@ -320,6 +341,7 @@ def valider() :
 
     def rm_add_rdv() : 
         liste_client.grid_forget()
+        liste_produit.grid_forget()
         l_commentaire_avant.grid_forget()
         l_date_rdv.grid_forget()
         e_commentaire_avant.grid_forget()
@@ -336,17 +358,43 @@ def valider() :
             
             if reponse : 
                 id_prospect_add_rdv = "".join(liste_client.get(ANCHOR)).split("#")[-1]
-                t_add_rdv = (e_date_add.get(), e_commentaire_avant.get(), id_prospect_add_rdv)
-                cursor.execute("INSERT INTO RDV (dateHeure, commentaireAvant, commentaireApres, id_prospect) values ( ? , ? , '' , ?)", t_add_rdv)
+                id_produit_add_rdv = "".join(liste_produit.get(ANCHOR)).split("#")[-1]
+                t_add_rdv = (e_date_add.get(), e_commentaire_avant.get(), id_prospect_add_rdv, id_produit_add_rdv)
+                cursor.execute("INSERT INTO RDV (dateHeure, commentaireAvant, commentaireApres, id_prospect, id_prod) values ( ? , ? , '' , ? , ?)", t_add_rdv)
                 connection.commit()
                 messagebox.showinfo("Ajouter avec succès", "Le rendez-vous a été ajouter avec succès.")
 
-
     btn_annul_add_rdv = Button(frame_btn_rdv, text="Annuler", command=rm_add_rdv)
     btn_add_rdv_confirm = Button(frame_btn_rdv, text="Ajouter", command=add_rdv_to_bdd)
+
+
+    def add_comm_to_bdd() : 
+        if e_commentaire_apres_rdv.get() == "" : 
+            messagebox.showinfo("Erreur dans l'ajout du commentaire", "Il manque des informations pour ajouter le commentaire d'apres rendez-vous.")
+        else : 
+            res = messagebox.askokcancel("Ajout du commentaire", "Voulez vous vraiment ajouter le commentaire ?")
+            if res : 
+                id_rdv = "".join(lst_rdv_for_add_comm.get(ANCHOR)).split("#")[-1]
+                commentaire = e_commentaire_apres_rdv.get()
+                sql = (commentaire, id_rdv)
+                cursor.execute("UPDATE RDV SET commentaireApres = ? where id_rdv = ?", sql)
+                connection.commit()
+                messagebox.showinfo("Ajouter avec succès", "Le commentaire d'après rendez-vous a été ajouter avec succès.")
+
+    l_commentaire_apres_rdv = Label(root, text="Entrez un commentaire d'apres rendez-vous :", width=40, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+    e_commentaire_apres_rdv = Entry(root, width=25)
+    btn_valider_comm_apres_rdv = Button(root, text="Ajouter le commentaire", command=add_comm_to_bdd)
+    lst_rdv_for_add_comm = Listbox(root, exportselection=0)
+    compteur_rdv = 0
+    for rdv2 in lst_rdv : 
+        compteur_rdv += 1
+        rdv = "#" + str(rdv2.get_id()) 
+        lst_rdv_for_add_comm.insert(compteur_rdv, rdv)
+
     ### pour ajouter un rdv
     def add_rdv() : 
         liste_client.grid(row=0+1, column=13)
+        liste_produit.grid(row=1, column=12)
         l_commentaire_avant.grid(row=1+1, column=12)
         l_date_rdv.grid(row=2+1, column=12)
         e_commentaire_avant.grid(row=1+1, column=13)
@@ -355,6 +403,17 @@ def valider() :
         btn_add_rdv_confirm.grid(row=0, column=1)
         frame_btn_rdv.grid(row=3+1, column=12, columnspan=2)
         l_ajout_rdv.grid(row=0, column=12, columnspan=2)
+
+
+
+
+    def add_comm_apres_rdv_consult() : 
+        l_commentaire_apres_rdv.grid(row=5, column=12)
+        lst_rdv_for_add_comm.grid(row=6, column=12)
+        e_commentaire_apres_rdv.grid(row=7, column=12, ipady=15)
+        btn_valider_comm_apres_rdv.grid(row=8, column=12)
+
+
         
 
 
@@ -369,12 +428,14 @@ def valider() :
 
 
     # pour les rendez vous : 
+    btn_add_com_apres_rdv = Button(root, text="Commenter le rendez vous", width=25, height=1, borderwidth=3, relief="groove", bg="#747e8b", command=add_comm_apres_rdv_consult)
     btn_add_rdv = Button(root, text="Ajouter un rendez-vous", width=25, height=1, borderwidth=3, relief="groove", bg="#747e8b", command=add_rdv)
     l_rdv = Label(root, text="Liste des rendez-vous : " , width=25, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
 
     tmp_id.grid(row=10, column=7)
     btn_add_rdv.grid(row=11, column=7)
-    l_rdv.grid(row=12, column=7)
+    btn_add_com_apres_rdv.grid(row=12, column=7)
+    l_rdv.grid(row=13, column=7)
 
     f_rdv = Frame(root)
 
@@ -382,32 +443,37 @@ def valider() :
     l_com_avant = Label(f_rdv, text="Commentaire",  width=13, height=1, borderwidth=3, relief="groove", bg="#747e8b")
     l_com_apres = Label(f_rdv, text="Com Apres RDV",  width=13, height=1, borderwidth=3, relief="groove", bg="#747e8b")
     l_prosp = Label(f_rdv, text="Prospect",  width=13, height=1, borderwidth=3, relief="groove", bg="#747e8b")
+    l_produit = Label(f_rdv, text="Produit",  width=13, height=1, borderwidth=3, relief="groove", bg="#747e8b")
 
-    f_rdv.grid(row=13, column=7)
+    f_rdv.grid(row=14, column=7)
     l_date.grid(row=0, column=0)
     l_com_avant.grid(row=0, column=1)
     l_com_apres.grid(row=0, column=2)
     l_prosp.grid(row=0, column=3)
+    l_produit.grid(row=0, column=4)
 
     count2 = 0
     print(lst_rdv)
     for rdv in lst_rdv : 
         count2+=1
         if count2 % 2 == 0 : 
-            tmp_date = Label(f_rdv, text= rdv.get_date(), width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+            tmp_date = Label(f_rdv, text= "# " + rdv.get_id() + rdv.get_date(), width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
             tmp_com = Label(f_rdv, text= rdv.get_com_avant(),   width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
             tmp_com_apres = Label(f_rdv, text= rdv.get_com_apres(),  width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
             tmp_prosp = Label(f_rdv, text= rdv.get_prosp(), width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
+            tmp_prod = Label(f_rdv, text=rdv.get_produit(),  width=13, height=1, borderwidth=3, relief="groove", bg="#B4BBC4")
         else : 
             tmp_date = Label(f_rdv, text= rdv.get_date(), width=13, height=1, borderwidth=3, relief="groove")
             tmp_com = Label(f_rdv, text= rdv.get_com_avant(),   width=13, height=1, borderwidth=3, relief="groove")
             tmp_com_apres = Label(f_rdv, text= rdv.get_com_apres(),  width=13, height=1, borderwidth=3, relief="groove")
             tmp_prosp = Label(f_rdv, text= rdv.get_prosp(), width=13, height=1, borderwidth=3, relief="groove")
+            tmp_prod = Label(f_rdv, text=rdv.get_produit(),  width=13, height=1, borderwidth=3, relief="groove")
 
         tmp_date.grid(row=count2 , column=0)
         tmp_com.grid(row=count2 , column=1)
         tmp_com_apres.grid(row=count2 , column=2)
         tmp_prosp.grid(row=count2 , column=3)
+        tmp_prod.grid(row=count2, column=4)
 
 root.mainloop()
 connection.close()
